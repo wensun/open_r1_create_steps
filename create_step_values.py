@@ -156,7 +156,7 @@ if __name__ == "__main__":
         data_path = "wen-sun/openr1-clean-DeepSeek-R1-Distill-Qwen-7B-generations",
         value_model_path = "VGS-AI/DeepSeek-VM-1.5B",
         tokenizer_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
-        batch_size = 2, 
+        batch_size = 4, 
         max_gen_len = 4096*4,
         accelerator = accelerator, 
         device = device
