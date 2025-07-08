@@ -114,16 +114,16 @@ def generate_values(
     dataloader = DataLoader(
         dataset, 
         batch_size = batch_size, 
-        collate_fn = debug_collate,
+        #collate_fn = debug_collate,
         drop_last=False,
         #sampler = sampler, 
-        #collate_fn = lambda b: dual_input_collate(b, tokenizer),
+        collate_fn = lambda b: dual_input_collate(b, tokenizer),
     )
     dataloader = accelerator.prepare(dataloader)
 
-    #print(f"[Rank {accelerator.process_index}] sampler length: {len(sampler)}")
+    print(f"[Rank {accelerator.process_index}] sampler length: {len(sampler)}")
     print(f"[Rank {accelerator.process_index}] expected batches: {len(dataloader)}")
-    print(f"[Rank {accelerator.process_index}] sampler length: {len(dataloader.sampler)}")
+    #print(f"[Rank {accelerator.process_index}] sampler length: {len(dataloader.sampler)}")
 
     model_loading_kwargs = dict(attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16, use_cache=False)
     classifier = classifier_lib.Qwen2ForClassifier.from_pretrained(value_model_path,
