@@ -83,7 +83,7 @@ def generate_values(
     original_dataset = load_dataset(data_path)['train']
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
-    dataset = dualinputdataset(original_dataset)
+    dataset = dualinputdataset(original_dataset.select(range(20)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
