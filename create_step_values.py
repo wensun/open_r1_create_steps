@@ -23,10 +23,15 @@ class dualinputdataset(torch.utils.data.Dataset):
         return len(self.data)
     
     def __getitem__(self, idx):
+        if self.data[idx]['is_correct'] is not None:
+            rew = float(self.data[idx]['is_correct'])
+        else:
+            rew = 0.0
+
         return {
             "prompt": self.data[idx]['messages'],
             "response": self.data[idx]['response'],
-            "reward": float(self.data[idx]['is_correct']),
+            "reward": rew,
             "id": idx
         }
 
