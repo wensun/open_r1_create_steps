@@ -100,23 +100,24 @@ def generate_values(
     stop_think_token_id = tokenizer.encode('</think>')[0]
 
 
-    sampler = DistributedSampler(
-        dataset,
-        num_replicas=accelerator.num_processes,
-        rank=accelerator.process_index,
-        shuffle=False  # or False for inference
-    )
+    #sampler = DistributedSampler(
+    #    dataset,
+    #    num_replicas=accelerator.num_processes,
+    #    rank=accelerator.process_index,
+    #    shuffle=False  # or False for inference
+    #)
 
     dataloader = DataLoader(
         dataset, 
         batch_size = batch_size, 
-        sampler = sampler, 
+        #sampler = sampler, 
         collate_fn = lambda b: dual_input_collate(b, tokenizer),
     )
     dataloader = accelerator.prepare(dataloader)
 
-    print(f"[Rank {accelerator.process_index}] sampler length: {len(sampler)}")
+    #print(f"[Rank {accelerator.process_index}] sampler length: {len(sampler)}")
     print(f"[Rank {accelerator.process_index}] expected batches: {len(dataloader)}")
+    print(f"[Rank {accelerator.process_index}] sampler length: {len(dataloader.sampler)}")
 
     model_loading_kwargs = dict(attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16, use_cache=False)
     classifier = classifier_lib.Qwen2ForClassifier.from_pretrained(value_model_path,
