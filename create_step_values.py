@@ -115,6 +115,9 @@ def generate_values(
     )
     dataloader = accelerator.prepare(dataloader)
 
+    print(f"[Rank {accelerator.process_index}] sampler length: {len(sampler)}")
+    print(f"[Rank {accelerator.process_index}] expected batches: {len(dataloader)}")
+
     model_loading_kwargs = dict(attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16, use_cache=False)
     classifier = classifier_lib.Qwen2ForClassifier.from_pretrained(value_model_path,
                                                                    device_map=None, 
