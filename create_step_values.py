@@ -13,6 +13,7 @@ from torch.distributed import init_process_group, destroy_process_group
 from torch.nn.parallel import DistributedDataParallel
 from IPython import embed
 from huggingface_hub import login
+from collections import defaultdict
 
 class dualinputdataset(torch.utils.data.Dataset):
     def __init__(self, data):
@@ -153,8 +154,16 @@ if __name__ == "__main__":
     print(len(parsed_data))
     print(len(parsed_data["prompt_len"]))    
     
-    HF_dataset = Dataset.from_dict(parsed_data)
-    HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
+    gathered_data = defaultdict(list)
+    for key in parsed_data:
+        all_values = accelerator.gather_for_metrics(parsed_data[key])
+        if accelerator.is_main_process:
+            gathered_data[key].extend(all_values)
+
+
+    if accelerator.is_main_process:
+        HF_dataset = Dataset.from_dict(gathered_data)
+        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
     
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
