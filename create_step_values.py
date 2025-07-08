@@ -95,7 +95,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(10000)))
+    dataset = dualinputdataset(original_dataset.select(range(1000)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -191,6 +191,8 @@ if __name__ == "__main__":
                 tensor_val = torch.tensor(val)
             except Exception:
                 tensor_val = val
+        else:
+            tensor_val = val
         
         all_values = accelerator.gather_for_metrics(tensor_val)
         #all_values = accelerator.gather_for_metrics(parsed_data[key])
