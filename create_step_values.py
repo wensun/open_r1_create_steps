@@ -78,6 +78,10 @@ def dual_input_collate(batch, tokenizer):
     }
 
 
+def debug_collate(batch):
+    print(f"Collating batch of size: {len(batch)}")
+    return torch.utils.data.default_collate(batch)
+
 def generate_values(
     data_path, value_model_path, tokenizer_name,
     batch_size,
@@ -110,8 +114,9 @@ def generate_values(
     dataloader = DataLoader(
         dataset, 
         batch_size = batch_size, 
+        collate_fun = debug_collate,
         #sampler = sampler, 
-        collate_fn = lambda b: dual_input_collate(b, tokenizer),
+        #collate_fn = lambda b: dual_input_collate(b, tokenizer),
     )
     dataloader = accelerator.prepare(dataloader)
 
@@ -189,6 +194,7 @@ if __name__ == "__main__":
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
     #    HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
+
 
 
 
