@@ -94,9 +94,17 @@ def generate_values(
     think_token_id = tokenizer.encode('<think>')[0] 
     stop_think_token_id = tokenizer.encode('</think>')[0]
 
+    sampler = DistributedSampler(
+        dataset,
+        num_replicas=accelerator.num_processes,
+        rank=accelerator.process_index,
+        shuffle=False
+    )
+
     dataloader = DataLoader(
         dataset, 
         batch_size = batch_size, 
+        sampler = sampler,
         collate_fn = lambda b: dual_input_collate(b, tokenizer),
     )
     dataloader = accelerator.prepare(dataloader)
