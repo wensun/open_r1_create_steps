@@ -95,7 +95,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(50240)))
+    dataset = dualinputdataset(original_dataset.select(range(20240)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -200,8 +200,10 @@ if __name__ == "__main__":
             # Add more fields if needed
         })
 
-
+        
         HF_dataset = Dataset.from_dict(gathered_data, features=features)
+        print(HF_dataset.features)
+        
         HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
     
     #if accelerator.is_main_process:
