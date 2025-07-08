@@ -95,7 +95,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(20240)))
+    dataset = dualinputdataset(original_dataset.select(range(10000)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -185,8 +185,21 @@ if __name__ == "__main__":
     
     gathered_data = defaultdict(list)
     for key in parsed_data:
-        all_values = accelerator.gather_for_metrics(parsed_data[key])
+        val = parsed_data[key]
+        if isinstance(val, list):
+            try:
+                tensor_val = torch.tensor(val)
+            except Exception:
+                tensor_val = val
+        
+        all_values = accelerator.gather_for_metrics(tensor_val)
+        #all_values = accelerator.gather_for_metrics(parsed_data[key])
         if accelerator.is_main_process:
+            if isinstance(all_values, torch.Tensor):
+                all_values = all_values.tolist()
+            elif isinstance(all_values, np.ndarray):
+                all_values = all_values.tolist()
+            
             gathered_data[key].extend(all_values)
 
 
@@ -199,7 +212,6 @@ if __name__ == "__main__":
             "rewards": Value("float32")
             # Add more fields if needed
         })
-
         
         HF_dataset = Dataset.from_dict(gathered_data, features=features)
         print(HF_dataset.features)
