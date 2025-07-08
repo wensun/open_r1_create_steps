@@ -114,10 +114,10 @@ def generate_values(
     dataloader = DataLoader(
         dataset, 
         batch_size = batch_size, 
-        #collate_fn = debug_collate,
+        collate_fn = debug_collate,
         drop_last=False,
-        #sampler = sampler, 
-        collate_fn = lambda b: dual_input_collate(b, tokenizer),
+        sampler = sampler, 
+        #collate_fn = lambda b: dual_input_collate(b, tokenizer),
     )
     dataloader = accelerator.prepare(dataloader)
 
