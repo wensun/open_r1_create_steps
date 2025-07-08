@@ -84,7 +84,7 @@ def generate_values(
     original_dataset = load_dataset(data_path)['train']
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
-    dataset = dualinputdataset(original_dataset.select(range(32)))
+    dataset = dualinputdataset(original_dataset)
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         data_path = "wen-sun/openr1-clean-DeepSeek-R1-Distill-Qwen-7B-generations",
         value_model_path = "VGS-AI/DeepSeek-VM-1.5B",
         tokenizer_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
-        batch_size = 4, 
+        batch_size = 2, 
         max_gen_len = 4096*4,
         accelerator = accelerator, 
         device = device
