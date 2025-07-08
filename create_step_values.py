@@ -203,8 +203,8 @@ if __name__ == "__main__":
         
         HF_dataset = Dataset.from_dict(gathered_data, features=features)
         print(HF_dataset.features)
-        
-        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
+
+        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values", exist_ok=True)
     
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
