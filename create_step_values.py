@@ -91,9 +91,11 @@ def generate_values(
 ):
     
     original_dataset = load_dataset(data_path)['train']
+    original_dataset = original_dataset.shuffle(seed= 42)
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
-    dataset = dualinputdataset(original_dataset.select(range(774272)))
+    
+    dataset = dualinputdataset(original_dataset.select(range(96784)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -104,24 +106,24 @@ def generate_values(
     stop_think_token_id = tokenizer.encode('</think>')[0]
 
 
-    sampler = DistributedSampler(
-        dataset,
-        num_replicas=accelerator.num_processes,
-        rank=accelerator.process_index,
-        shuffle=False  # or False for inference
-    )
+    #sampler = DistributedSampler(
+    #    dataset,
+    #    num_replicas=accelerator.num_processes,
+    #    rank=accelerator.process_index,
+    #    shuffle=False  # or False for inference
+    #)
 
     dataloader = DataLoader(
         dataset, 
         batch_size = batch_size, 
-        collate_fn = debug_collate,
-        drop_last=False,
-        sampler = sampler, 
-        #collate_fn = lambda b: dual_input_collate(b, tokenizer),
+        #collate_fn = debug_collate,
+        #drop_last=False,
+        #sampler = sampler, 
+        collate_fn = lambda b: dual_input_collate(b, tokenizer),
     )
     dataloader = accelerator.prepare(dataloader)
 
-    print(f"[Rank {accelerator.process_index}] sampler length: {len(sampler)}")
+    #print(f"[Rank {accelerator.process_index}] sampler length: {len(sampler)}")
     print(f"[Rank {accelerator.process_index}] expected batches: {len(dataloader)}")
     #print(f"[Rank {accelerator.process_index}] sampler length: {len(dataloader.sampler)}")
 
