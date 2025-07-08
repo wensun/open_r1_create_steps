@@ -8,7 +8,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, Features, Sequence, Value
 from torch.distributed import init_process_group, destroy_process_group
 from torch.nn.parallel import DistributedDataParallel
 from IPython import embed
@@ -95,7 +95,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(1000)))
+    dataset = dualinputdataset(original_dataset.select(range(10000)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -117,7 +117,7 @@ def generate_values(
         dataset, 
         batch_size = batch_size, 
         #collate_fn = debug_collate,
-        #drop_last=False,
+        drop_last=False,
         #sampler = sampler, 
         collate_fn = lambda b: dual_input_collate(b, tokenizer),
     )
@@ -191,7 +191,17 @@ if __name__ == "__main__":
 
 
     if accelerator.is_main_process:
-        HF_dataset = Dataset.from_dict(gathered_data)
+
+        features = Features({
+            "prompt_len": Value("int32"),
+            "prompt_generation_tokenized": Sequence(Value("int32")),
+            "success_probs": Sequence(Value("float32")),
+            "rewards": Value("float32")
+            # Add more fields if needed
+        })
+
+
+        HF_dataset = Dataset.from_dict(gathered_data, features=features)
         HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
     
     #if accelerator.is_main_process:
