@@ -124,7 +124,10 @@ def generate_values(
         'rewards': [], 
     }
 
+    i = 0
     for batch in tqdm(dataloader, desc="Loading batches"):
+        i += 1
+        print(i)
         batch = {k: v.to(device) for k,v in batch.items()}
         with torch.no_grad():
             outputs = classifier(
