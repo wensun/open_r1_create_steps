@@ -181,12 +181,13 @@ if __name__ == "__main__":
         accelerator = accelerator, 
         device = device
     )
-    
-    print("#######################")
-    print(len(parsed_data))
-    print(len(parsed_data["prompt_len"]))    
+     
     
     rank = accelerator.process_index
+    print(f"Rank {rank} of {accelerator.num_processes}")
+    print(len(parsed_data))
+    print(len(parsed_data["prompt_len"]))   
+
     repo_id = "wen-sun/openr1_token_wise_values_multi_rank"
     split_name = f"train_rank{rank}"
     HF_dataset = Dataset.from_dict(parsed_data)
