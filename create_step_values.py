@@ -156,8 +156,10 @@ def generate_values(
         #print(outputs['logits'].shape)
         #### print(f"Process {accelerator.process_index} handling IDs: {batch['id'].tolist()}")
         new_data['prompt_len'] += batch['prompts_len'].tolist()
-        new_data['prompt_generation_tokenized']+= batch['tokenized_inputs'].tolist()
-        new_data['success_probs'] += outputs['success_probs'].tolist()
+        #new_data['prompt_generation_tokenized']+= batch['tokenized_inputs'].tolist()
+        new_data['prompt_generation_tokenized'] += [row for row in batch['tokenized_inputs']]
+        #new_data['success_probs'] += outputs['success_probs'].tolist()
+        new_data['success_probs'] += [row for row in batch['success_probs']] 
         new_data['rewards'] += batch['rewards'].tolist()
     
     return new_data
@@ -184,58 +186,24 @@ if __name__ == "__main__":
     print(len(parsed_data["prompt_len"]))    
     
     gathered_data = defaultdict(list)
-    for key, val in parsed_data.items():
-        val = parsed_data[key]
-        if isinstance(val, list) and isinstance(val[0], (int, float)):
-            try:
-                tensor_val = torch.tensor(val, device=device)
-                all_values = accelerator.gather_for_metrics(tensor_val)
-            except Exception as e:
-                print(f"[{key}] Tensor conversion or gather failed, falling back: {e}")
-                all_values = val
-        else:
-            # For nested lists or anything else (e.g., list of lists), gather directly
-            try:
-                all_values = accelerator.gather_for_metrics(val)
-            except Exception as e:
-                print(f"[{key}] Failed to gather nested or non-tensor: {e}")
-                all_values = val
-        
-        #if isinstance(val, list):
-        #    try:
-        #        tensor_val = torch.tensor(val, device = device)
-        #    except Exception:
-        #        tensor_val = val
-        #else:
-        #    tensor_val = val.to(device) if hasattr(val, "to") else val
-        if isinstance(all_values, torch.Tensor):
-            all_values = all_values.tolist()
-        elif isinstance(all_values, np.ndarray):
-            all_values = all_values.tolist()
-
-        #all_values = accelerator.gather_for_metrics(tensor_val)
-        #all_values = accelerator.gather_for_metrics(parsed_data[key])
+    
+    gathered_data = defaultdict(list)
+    for key in parsed_data:
+        all_values = accelerator.gather_for_metrics(parsed_data[key])
         if accelerator.is_main_process:
-            #if isinstance(all_values, torch.Tensor):
-            #    all_values = all_values.tolist()
-            #elif isinstance(all_values, np.ndarray):
-            #    all_values = all_values.tolist()
             gathered_data[key].extend(all_values)
-
 
     if accelerator.is_main_process:
 
-        features = Features({
-            "prompt_len": Value("int32"),
-            "prompt_generation_tokenized": Sequence(Value("int32")),
-            "success_probs": Sequence(Value("float32")),
-            "rewards": Value("float32")
+        #features = Features({
+        #    "prompt_len": Value("int32"),
+        #    "prompt_generation_tokenized": Sequence(Value("int32")),
+        #    "success_probs": Sequence(Value("float32")),
+        #    "rewards": Value("float32")
             # Add more fields if needed
-        })
-        
-        HF_dataset = Dataset.from_dict(gathered_data, features=features)
-        print(HF_dataset.features)
-
+        #})
+        HF_dataset = Dataset.from_dict(gathered_data)
+        #print(HF_dataset.features)
         HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
     
     #if accelerator.is_main_process:
