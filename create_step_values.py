@@ -194,7 +194,6 @@ if __name__ == "__main__":
             gathered_data[key].extend(all_values)
 
     if accelerator.is_main_process:
-
         #features = Features({
         #    "prompt_len": Value("int32"),
         #    "prompt_generation_tokenized": Sequence(Value("int32")),
@@ -202,7 +201,7 @@ if __name__ == "__main__":
         #    "rewards": Value("float32")
             # Add more fields if needed
         #})
-        HF_dataset = Dataset.from_dict(gathered_data)
+        HF_dataset = Dataset.from_dict(parsed_data)
         #print(HF_dataset.features)
         HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
     
