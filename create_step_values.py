@@ -159,7 +159,7 @@ def generate_values(
         #new_data['prompt_generation_tokenized']+= batch['tokenized_inputs'].tolist()
         new_data['prompt_generation_tokenized'] += [row for row in batch['tokenized_inputs']]
         #new_data['success_probs'] += outputs['success_probs'].tolist()
-        new_data['success_probs'] += [row for row in batch['success_probs']] 
+        new_data['success_probs'] += [row for row in outputs['success_probs']] 
         new_data['rewards'] += batch['rewards'].tolist()
     
     return new_data
