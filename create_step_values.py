@@ -73,7 +73,7 @@ def dual_input_collate(batch, tokenizer):
         "prompts_len": torch.tensor(prompts_len, dtype=torch.long),
         "tokenized_inputs": tokenized_inputs, 
         "attention_masks": attention_masks,
-        "rewards": torch.tensor(rewards, dtype=torch.float32),
+        "rewards": torch.tensor(rewards, dtype=torch.float16),
         "id": torch.tensor(ids, dtype=torch.long)
     }
 
@@ -160,7 +160,7 @@ def generate_values(
         new_data['prompt_generation_tokenized'] += [row.tolist() for row in batch['tokenized_inputs']]
         #new_data['success_probs'] += outputs['success_probs'].tolist()
         output_probs = outputs['success_probs'].to(torch.float16)
-        new_data['success_probs'] += [row.tolist() for row in outputs['success_probs']] 
+        new_data['success_probs'] += [row.tolist() for row in output_probs] 
         new_data['rewards'] += batch['rewards'].tolist()
     
     return new_data
