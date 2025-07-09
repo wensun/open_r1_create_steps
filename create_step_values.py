@@ -188,11 +188,11 @@ if __name__ == "__main__":
         val = parsed_data[key]
         if isinstance(val, list):
             try:
-                tensor_val = torch.tensor(val)
+                tensor_val = torch.tensor(val, device = device)
             except Exception:
                 tensor_val = val
         else:
-            tensor_val = val
+            tensor_val = val.to(device) if hasattr(val, "to") else val
         
         all_values = accelerator.gather_for_metrics(tensor_val)
         #all_values = accelerator.gather_for_metrics(parsed_data[key])
