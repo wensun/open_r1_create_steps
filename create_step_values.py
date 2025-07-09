@@ -188,12 +188,13 @@ if __name__ == "__main__":
     print(len(parsed_data))
     print(len(parsed_data["prompt_len"]))   
 
-    repo_id = "wen-sun/openr1_token_wise_values_multi_rank{}".format(rank)
-    #split_name = f"train_rank{rank}"
-    HF_dataset = Dataset.from_dict(parsed_data)
-    HF_dataset.push_to_hub(repo_id)
 
-    '''
+    #repo_id = "wen-sun/openr1_token_wise_values_multi_rank{}".format(rank)
+    #split_name = f"train_rank{rank}"
+    #HF_dataset = Dataset.from_dict(parsed_data)
+    #HF_dataset.push_to_hub(repo_id)
+
+
 
     gathered_data = defaultdict(list)
     for key in parsed_data:
@@ -216,7 +217,7 @@ if __name__ == "__main__":
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
     #    HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
-    '''
+    
 
 
 
