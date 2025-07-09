@@ -181,15 +181,16 @@ if __name__ == "__main__":
         accelerator = accelerator, 
         device = device
     )
+    
     print("#######################")
     print(len(parsed_data))
     print(len(parsed_data["prompt_len"]))    
     
-    gathered_data = defaultdict(list)
     
+
     gathered_data = defaultdict(list)
     for key in parsed_data:
-        all_values = accelerator.gather_for_metrics(parsed_data[key])
+        all_values = accelerator.gather(parsed_data[key])
         if accelerator.is_main_process:
             gathered_data[key].extend(all_values)
 
@@ -201,7 +202,7 @@ if __name__ == "__main__":
         #    "rewards": Value("float32")
             # Add more fields if needed
         #})
-        HF_dataset = Dataset.from_dict(parsed_data)
+        HF_dataset = Dataset.from_dict(gathered_data)
         #print(HF_dataset.features)
         HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
     
