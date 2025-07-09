@@ -159,6 +159,7 @@ def generate_values(
         #new_data['prompt_generation_tokenized']+= batch['tokenized_inputs'].tolist()
         new_data['prompt_generation_tokenized'] += [row.tolist() for row in batch['tokenized_inputs']]
         #new_data['success_probs'] += outputs['success_probs'].tolist()
+        output_probs = outputs['success_probs'].to(torch.float16)
         new_data['success_probs'] += [row.tolist() for row in outputs['success_probs']] 
         new_data['rewards'] += batch['rewards'].tolist()
     
@@ -211,7 +212,7 @@ if __name__ == "__main__":
         #})
         HF_dataset = Dataset.from_dict(gathered_data)
         #print(HF_dataset.features)
-        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values")
+        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_2")
     
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
