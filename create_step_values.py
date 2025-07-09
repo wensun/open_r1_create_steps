@@ -184,24 +184,42 @@ if __name__ == "__main__":
     print(len(parsed_data["prompt_len"]))    
     
     gathered_data = defaultdict(list)
-    for key in parsed_data:
+    for key, val in parsed_data.items():
         val = parsed_data[key]
-        if isinstance(val, list):
+        if isinstance(val, list) and isinstance(val[0], (int, float)):
             try:
-                tensor_val = torch.tensor(val, device = device)
-            except Exception:
-                tensor_val = val
+                tensor_val = torch.tensor(val, device=device)
+                all_values = accelerator.gather_for_metrics(tensor_val)
+            except Exception as e:
+                print(f"[{key}] Tensor conversion or gather failed, falling back: {e}")
+                all_values = val
         else:
-            tensor_val = val.to(device) if hasattr(val, "to") else val
+            # For nested lists or anything else (e.g., list of lists), gather directly
+            try:
+                all_values = accelerator.gather_for_metrics(val)
+            except Exception as e:
+                print(f"[{key}] Failed to gather nested or non-tensor: {e}")
+                all_values = val
         
-        all_values = accelerator.gather_for_metrics(tensor_val)
+        #if isinstance(val, list):
+        #    try:
+        #        tensor_val = torch.tensor(val, device = device)
+        #    except Exception:
+        #        tensor_val = val
+        #else:
+        #    tensor_val = val.to(device) if hasattr(val, "to") else val
+        if isinstance(all_values, torch.Tensor):
+            all_values = all_values.tolist()
+        elif isinstance(all_values, np.ndarray):
+            all_values = all_values.tolist()
+
+        #all_values = accelerator.gather_for_metrics(tensor_val)
         #all_values = accelerator.gather_for_metrics(parsed_data[key])
         if accelerator.is_main_process:
-            if isinstance(all_values, torch.Tensor):
-                all_values = all_values.tolist()
-            elif isinstance(all_values, np.ndarray):
-                all_values = all_values.tolist()
-            
+            #if isinstance(all_values, torch.Tensor):
+            #    all_values = all_values.tolist()
+            #elif isinstance(all_values, np.ndarray):
+            #    all_values = all_values.tolist()
             gathered_data[key].extend(all_values)
 
 
