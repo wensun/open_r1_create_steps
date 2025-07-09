@@ -195,10 +195,9 @@ if __name__ == "__main__":
     #HF_dataset.push_to_hub(repo_id)
 
 
-
     gathered_data = defaultdict(list)
     for key in parsed_data:
-        all_values = accelerator.gather(parsed_data[key])
+        all_values = accelerator.gather_for_metrics(parsed_data[key])
         if accelerator.is_main_process:
             gathered_data[key].extend(all_values)
 
