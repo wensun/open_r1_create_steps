@@ -188,10 +188,10 @@ if __name__ == "__main__":
     print(len(parsed_data))
     print(len(parsed_data["prompt_len"]))   
 
-    repo_id = "wen-sun/openr1_token_wise_values_multi_rank"
-    split_name = f"train_rank{rank}"
+    repo_id = "wen-sun/openr1_token_wise_values_multi_rank{}".format(rank)
+    #split_name = f"train_rank{rank}"
     HF_dataset = Dataset.from_dict(parsed_data)
-    HF_dataset.push_to_hub(repo_id, split=split_name)
+    HF_dataset.push_to_hub(repo_id)
 
     '''
 
