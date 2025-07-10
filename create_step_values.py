@@ -191,7 +191,7 @@ def generate_values(
         
         new_data['success_probs'] += [row.cpu().numpy().tolist() 
                                         for row in outputs['success_probs']]
-                                        
+
         new_data['rewards'] += batch['rewards'].cpu().numpy().tolist()
     
     return new_data
@@ -243,7 +243,7 @@ if __name__ == "__main__":
         #})
         HF_dataset = Dataset.from_dict(gathered_data)
         #print(HF_dataset.features)
-        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_test")
+        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_test_2")
     
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
