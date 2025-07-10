@@ -82,6 +82,38 @@ def debug_collate(batch):
     print(f"Collating batch of size: {len(batch)}")
     return torch.utils.data.default_collate(batch)
 
+
+def post_processing_batch(batch, outputs, step = 4096):
+    #processed_data = defaultdict(list)
+    prompt_lens = batch['prompts_len'].tolist()
+    #processed_data['prompts_len'].add(prompt_lens)
+    bs = len(prompt_lens)
+
+    batch_step_level_probs = []
+    for i in range(bs):
+        prompt_len = prompt_lens[i]
+        p_gen_tokens = batch['tokenized_inputs'][i]
+        valid_p_gen_len = torch.sum(batch['attention_masks'][i])
+        valid_p_gen_tokens = p_gen_tokens[:valid_p_gen_len]
+        valid_success_probs = outputs['success_probs'][i][:valid_p_gen_len]
+        p_tokens = valid_p_gen_tokens[:prompt_len]
+        gen_tokens = valid_p_gen_tokens[prompt_len:]
+        max_gen_len = min(step*4, gen_tokens.size(0))
+        gen_tokens = gen_tokens[:max_gen_len]
+
+        step_level_probs = []
+        for j in range(0, max_gen_len, step):
+            start_id = j
+            p = valid_success_probs[prompt_len + start_id - 1] #start at the end token of the prompt.
+            step_level_probs.append(p)
+        
+        batch_step_level_probs.append(step_level_probs)
+
+    return batch_step_level_probs # list of list
+
+
+
+
 def generate_values(
     data_path, value_model_path, tokenizer_name,
     batch_size,
@@ -95,7 +127,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(400000)))
+    dataset = dualinputdataset(original_dataset.select(range(200000)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -155,12 +187,16 @@ def generate_values(
         #print(batch["tokenized_inputs"].shape)
         #print(outputs['logits'].shape)
         #### print(f"Process {accelerator.process_index} handling IDs: {batch['id'].tolist()}")
+
+        batch_step_level_probs = post_processing_batch(batch, outputs)
+
         new_data['prompt_len'] += batch['prompts_len'].tolist()
         #new_data['prompt_generation_tokenized']+= batch['tokenized_inputs'].tolist()
         new_data['prompt_generation_tokenized'] += [row.tolist() for row in batch['tokenized_inputs']]
         #new_data['success_probs'] += outputs['success_probs'].tolist()
         output_probs = outputs['success_probs'].to(torch.float16)
-        new_data['success_probs'] += [row.tolist() for row in output_probs] 
+        #new_data['success_probs'] += [row.tolist() for row in output_probs] 
+        new_data['success_probs'] += batch_step_level_probs  
         new_data['rewards'] += batch['rewards'].tolist()
     
     return new_data

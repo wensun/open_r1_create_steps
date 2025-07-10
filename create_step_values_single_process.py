@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from transformers import AutoTokenizer
-from accelerate import Accelerator
+#from accelerate import Accelerator
 import classifier_lib
 import os
 from tqdm import tqdm
@@ -77,6 +77,36 @@ def dual_input_collate(batch, tokenizer):
         "id": torch.tensor(ids, dtype=torch.long)
     }
 
+def post_processing_batch(batch, outputs, step = 4096):
+    #processed_data = defaultdict(list)
+    prompt_lens = batch['prompts_len'].tolist()
+    #processed_data['prompts_len'].add(prompt_lens)
+    bs = len(prompt_lens)
+
+    batch_step_level_probs = []
+    for i in range(bs):
+        prompt_len = prompt_lens[i]
+        p_gen_tokens = batch['tokenized_inputs'][i]
+        valid_p_gen_len = torch.sum(batch['attention_masks'][i])
+        valid_p_gen_tokens = p_gen_tokens[:valid_p_gen_len]
+        valid_success_probs = outputs['success_probs'][i][:valid_p_gen_len]
+        p_tokens = valid_p_gen_tokens[:prompt_len]
+        gen_tokens = valid_p_gen_tokens[prompt_len:]
+        max_gen_len = min(step*4, gen_tokens.size(0))
+        gen_tokens = gen_tokens[:max_gen_len]
+
+        step_level_probs = []
+        for j in range(0, max_gen_len, step):
+            start_id = j
+            p = valid_success_probs[prompt_len + start_id - 1] #start at the end token of the prompt.
+            step_level_probs.append(p)
+        
+        batch_step_level_probs.append(step_level_probs)
+
+    return batch_step_level_probs
+
+
+
 
 def generate_values(
     data_path, value_model_path, tokenizer_name,
@@ -128,15 +158,21 @@ def generate_values(
                 batch['tokenized_inputs'], 
                 batch['attention_masks']
             )
+
+        batch_step_level_probs = post_processing_batch(batch, outputs)
+
         #print(batch["tokenized_inputs"].shape)
         #print(outputs['logits'].shape)
         new_data['prompt_len'] += batch['prompts_len'].tolist()
         #new_data['prompt_generation_tokenized']+= batch['tokenized_inputs'].tolist()
         new_data['prompt_generation_tokenized'] += [row for row in batch['tokenized_inputs']]
         #new_data['success_probs'] += outputs['success_probs'].tolist()
-        new_data['success_probs'] += [row for row in batch['success_probs']] 
+        #new_data['success_probs'] += [row for row in batch['success_probs']] 
+        new_data['success_probs'] += batch_step_level_probs
         new_data['rewards'] += batch['rewards'].tolist()
     
+        embed()
+        
     return new_data
 
 if __name__ == "__main__":
@@ -149,7 +185,7 @@ if __name__ == "__main__":
         data_path = "wen-sun/openr1-clean-DeepSeek-R1-Distill-Qwen-7B-generations",
         value_model_path = "VGS-AI/DeepSeek-VM-1.5B",
         tokenizer_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
-        batch_size = 4, 
+        batch_size = 2, 
         max_gen_len = 4096*4,
         device = device
     )
@@ -157,8 +193,8 @@ if __name__ == "__main__":
     print(len(parsed_data))
     print(len(parsed_data["prompt_len"]))    
     
-    HF_dataset = Dataset.from_dict(parsed_data)
-    HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_test")
+    #HF_dataset = Dataset.from_dict(parsed_data)
+    #HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_test")
     
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
