@@ -89,7 +89,7 @@ def post_processing_batch(batch, outputs, step = 4096):
     #processed_data['prompts_len'].add(prompt_lens)
     bs = len(prompt_lens)
 
-    batch_step_level_probs = []
+    batch_step_level_probs = [] #list of list of floats
     for i in range(bs):
         prompt_len = prompt_lens[i]
         p_gen_tokens = batch['tokenized_inputs'][i]
@@ -104,14 +104,12 @@ def post_processing_batch(batch, outputs, step = 4096):
         step_level_probs = []
         for j in range(0, max_gen_len, step):
             start_id = j
-            p = valid_success_probs[prompt_len + start_id - 1] #start at the end token of the prompt.
+            p = float(valid_success_probs[prompt_len + start_id - 1]) #start at the end token of the prompt.
             step_level_probs.append(p)
         
         batch_step_level_probs.append(step_level_probs)
 
-    return batch_step_level_probs # list of list
-
-
+    return batch_step_level_probs
 
 
 def generate_values(
@@ -127,7 +125,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(200000)))
+    dataset = dualinputdataset(original_dataset.select(range(1000)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -184,20 +182,13 @@ def generate_values(
                 batch['tokenized_inputs'], 
                 batch['attention_masks']
             )
-        #print(batch["tokenized_inputs"].shape)
-        #print(outputs['logits'].shape)
-        #### print(f"Process {accelerator.process_index} handling IDs: {batch['id'].tolist()}")
-
-        batch_step_level_probs = post_processing_batch(batch, outputs)
-
         new_data['prompt_len'] += batch['prompts_len'].tolist()
-        #new_data['prompt_generation_tokenized']+= batch['tokenized_inputs'].tolist()
-        new_data['prompt_generation_tokenized'] += [row.tolist() for row in batch['tokenized_inputs']]
-        #new_data['success_probs'] += outputs['success_probs'].tolist()
-        output_probs = outputs['success_probs'].to(torch.float16)
-        #new_data['success_probs'] += [row.tolist() for row in output_probs] 
-        new_data['success_probs'] += batch_step_level_probs  
-        new_data['rewards'] += batch['rewards'].tolist()
+        new_data['prompt_generation_tokenized'] += [row.cpu().numpy().tolist() 
+                                                    for row in batch['tokenized_inputs']]
+    
+        batch_step_level_probs = post_processing_batch(batch, outputs)
+        new_data['success_probs'] += batch_step_level_probs #list of list of floats
+        new_data['rewards'] += batch['rewards'].cpu().numpy().tolist()
     
     return new_data
 
