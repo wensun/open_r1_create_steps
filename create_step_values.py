@@ -186,8 +186,12 @@ def generate_values(
         new_data['prompt_generation_tokenized'] += [row.cpu().numpy().tolist() 
                                                     for row in batch['tokenized_inputs']]
     
-        batch_step_level_probs = post_processing_batch(batch, outputs)
-        new_data['success_probs'] += batch_step_level_probs #list of list of floats
+        #batch_step_level_probs = post_processing_batch(batch, outputs)
+        #new_data['success_probs'] += batch_step_level_probs #list of list of floats
+        
+        new_data['success_probs'] += [row.cpu().numpy().tolist() 
+                                        for row in outputs['success_probs']]
+                                        
         new_data['rewards'] += batch['rewards'].cpu().numpy().tolist()
     
     return new_data
