@@ -125,7 +125,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(1000)))
+    dataset = dualinputdataset(original_dataset.select(range(200000)))
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -186,12 +186,8 @@ def generate_values(
         new_data['prompt_generation_tokenized'] += [row.cpu().numpy().tolist() 
                                                     for row in batch['tokenized_inputs']]
     
-        #batch_step_level_probs = post_processing_batch(batch, outputs)
-        #new_data['success_probs'] += batch_step_level_probs #list of list of floats
-        
-        new_data['success_probs'] += [row.cpu().numpy().tolist() 
-                                        for row in outputs['success_probs']]
-
+        batch_step_level_probs = post_processing_batch(batch, outputs)
+        new_data['success_probs'] += batch_step_level_probs #list of list of floats
         new_data['rewards'] += batch['rewards'].cpu().numpy().tolist()
     
     return new_data
@@ -243,7 +239,7 @@ if __name__ == "__main__":
         #})
         HF_dataset = Dataset.from_dict(gathered_data)
         #print(HF_dataset.features)
-        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_test_2")
+        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_large_new_form")
     
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
