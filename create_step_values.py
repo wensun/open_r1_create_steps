@@ -80,7 +80,7 @@ def dual_input_collate(batch, tokenizer):
         "rewards": torch.tensor(rewards, dtype=torch.float16),
         "id": torch.tensor(ids, dtype=torch.long),
         "message_ids": torch.tensor(message_ids, dtype = torch.long),
-        "response_ids": torch.tensor(response_ids, dtype = torch.ong),
+        "response_ids": torch.tensor(response_ids, dtype = torch.long),
     }
 
 
