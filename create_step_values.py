@@ -33,6 +33,8 @@ class dualinputdataset(torch.utils.data.Dataset):
             "response": self.data[idx]['response'],
             "reward": rew,
             "id": idx
+            "message_id": self.data[idx]['message_id']
+            "response_id": self.data[idx]["response_id"]
         }
 
 def dual_input_collate(batch, tokenizer):
@@ -40,6 +42,8 @@ def dual_input_collate(batch, tokenizer):
     responses = [item['response'] for item in batch]
     ids = [item['id'] for item in batch]
     rewards = [item['reward'] for item in batch]
+    message_ids = [item['message_id'] for item in batch]
+    response_ids = [item['response_id'] for item in batch]
 
     formatted_prompts = [
         tokenizer.apply_chat_template(
@@ -74,13 +78,15 @@ def dual_input_collate(batch, tokenizer):
         "tokenized_inputs": tokenized_inputs, 
         "attention_masks": attention_masks,
         "rewards": torch.tensor(rewards, dtype=torch.float16),
-        "id": torch.tensor(ids, dtype=torch.long)
+        "id": torch.tensor(ids, dtype=torch.long),
+        "message_ids": torch.tensor(message_ids, dtype = torch.long)
+        "response_ids": torch.tensor(response_ids, dtype = torch.ong)
     }
 
 
-def debug_collate(batch):
-    print(f"Collating batch of size: {len(batch)}")
-    return torch.utils.data.default_collate(batch)
+#def debug_collate(batch):
+#    print(f"Collating batch of size: {len(batch)}")
+#    return torch.utils.data.default_collate(batch)
 
 
 def post_processing_batch(batch, outputs, step = 4096):
@@ -125,7 +131,7 @@ def generate_values(
     print("number of rows in the dataset: {}".format(len(original_dataset)))
     print(original_dataset[0].keys())
     
-    dataset = dualinputdataset(original_dataset.select(range(200000)))
+    dataset = dualinputdataset(original_dataset.select(range(2000))) #large: 200000
 
     #setup tokenizer
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -170,6 +176,8 @@ def generate_values(
         'prompt_generation_tokenized': [],
         'success_probs': [],
         'rewards': [], 
+        'message_id': [],
+        'response_id': [],
     }
 
     i = 0
@@ -182,13 +190,15 @@ def generate_values(
                 batch['tokenized_inputs'], 
                 batch['attention_masks']
             )
-        new_data['prompt_len'] += batch['prompts_len'].tolist()
+        new_data['prompt_len'] += batch['prompts_len'].cpu().numpy().tolist()
         new_data['prompt_generation_tokenized'] += [row.cpu().numpy().tolist() 
                                                     for row in batch['tokenized_inputs']]
     
         batch_step_level_probs = post_processing_batch(batch, outputs)
         new_data['success_probs'] += batch_step_level_probs #list of list of floats
         new_data['rewards'] += batch['rewards'].cpu().numpy().tolist()
+        new_data['message_id'] += batch['message_ids'].cpu().numpy().tolist()
+        new_data['response_id'] += batch['response_ids'].cpu().numpy().tolist()
     
     return new_data
 
@@ -239,7 +249,7 @@ if __name__ == "__main__":
         #})
         HF_dataset = Dataset.from_dict(gathered_data)
         #print(HF_dataset.features)
-        HF_dataset.push_to_hub("wen-sun/openr1_token_wise_values_large_new_form")
+        HF_dataset.push_to_hub("wen-sun/openr1_step_wise_values_large_test")
     
     #if accelerator.is_main_process:
     #    HF_dataset = Dataset.from_dict(parsed_data)
