@@ -32,9 +32,9 @@ class dualinputdataset(torch.utils.data.Dataset):
             "prompt": self.data[idx]['messages'],
             "response": self.data[idx]['response'],
             "reward": rew,
-            "id": idx
-            "message_id": self.data[idx]['message_id']
-            "response_id": self.data[idx]["response_id"]
+            "id": idx,
+            "message_id": self.data[idx]['message_id'],
+            "response_id": self.data[idx]["response_id"],
         }
 
 def dual_input_collate(batch, tokenizer):
@@ -79,8 +79,8 @@ def dual_input_collate(batch, tokenizer):
         "attention_masks": attention_masks,
         "rewards": torch.tensor(rewards, dtype=torch.float16),
         "id": torch.tensor(ids, dtype=torch.long),
-        "message_ids": torch.tensor(message_ids, dtype = torch.long)
-        "response_ids": torch.tensor(response_ids, dtype = torch.ong)
+        "message_ids": torch.tensor(message_ids, dtype = torch.long),
+        "response_ids": torch.tensor(response_ids, dtype = torch.ong),
     }
 
 
